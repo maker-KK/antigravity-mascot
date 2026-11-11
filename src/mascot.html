@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Antigravity Mascot</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+  :root {
+    --suit: #F1F5F9;
+    --suit-shade: #CBD5E1;
+    --suit-hi: #FFFFFF;
+    --visor: #0B1221;
+    --accent: #38BDF8;
+    --accent-deep: #4F46E5;
+    --accent-soft: rgba(56, 189, 248, 0.32);
+    --eye: #38BDF8;
+    --cheek: #F472B6;
+  }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+  }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Agent theme overrides */
+  .mascot[data-source="antigravity"] {
+    --accent: #38BDF8;
+    --accent-deep: #4F46E5;
+    --accent-soft: rgba(56, 189, 248, 0.36);
+    --eye: #38BDF8;
+  }
+  .mascot[data-source="claude"] {
+    --accent: #FB923C;
+    --accent-deep: #EA580C;
+    --accent-soft: rgba(251, 146, 60, 0.36);
+    --eye: #FDBA74;
+  }
+
+  /* Escalation mood overrides */
+  .mascot.mad1 {
+    --suit: #FDE68A;
+    --suit-shade: #F59E0B;
+    --accent: #F59E0B;
+    --eye: #FBBF24;
+  }
+  .mascot.mad2 {
+    --suit: #FCA5A5;
+    --suit-shade: #DC2626;
+    --accent: #EF4444;
+    --accent-soft: rgba(239, 68, 68, 0.45);
+    --eye: #FF4D4D;
+  }
+
+  .mascot {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 124px;
+    height: 118px;
+    cursor: pointer;
+    pointer-events: auto;
+    will-change: transform;
+  }
+
+  .rig {
+    width: 124px;
+    height: 118px;
+    transform-origin: 95% 95%;
+    transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .rig.float {
+    animation: zeroG 2.1s ease-in-out infinite alternate;
+  }
+  @keyframes zeroG {
+    from { transform: rotate(-11deg) translateY(0px); }
+    to   { transform: rotate(-7deg) translateY(-7px); }
+  }
+  .rig.hop {
+    transform: translateY(-13px) !important;
+  }
+  .rig.float.hop {
+    transform: rotate(-14deg) translateY(-14px) !important;
+  }
+
+  .mascot svg * {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: fill 0.4s ease, stroke 0.4s ease, opacity 0.2s ease;
+  }
+
+  .suit-fill { fill: var(--suit); }
+  .suit-shade { fill: var(--suit-shade); }
+  .suit-hi { fill: var(--suit-hi); }
+  .visor-fill { fill: var(--visor); }
+  .accent-fill { fill: var(--accent); }
+  .eye-fill { fill: var(--eye); }
+
+  /* Antenna beacon pulse */
+  .beacon-glow {
+    fill: var(--accent);
+    opacity: 0.45;
+    animation: pulseOrb 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes pulseOrb {
+    from { transform: scale(0.85); opacity: 0.3; }
+    to   { transform: scale(1.45); opacity: 0.75; }
+  }
+
+  /* Arm & leg animations */
+  .wave .arm-l {
+    animation: waveArm 0.2s 6 alternate ease-in-out;
+  }
+  .fist .arm-l {
+    animation: fistPump 0.17s infinite alternate ease-in-out;
+  }
+  .fist .arm-r {
+    animation: fistPump 0.17s infinite alternate-reverse ease-in-out;
+  }
+  @keyframes waveArm {
+    to { transform: translateY(-9px) rotate(-22deg); }
+  }
+  @keyframes fistPump {
+    to { transform: translateY(-8px) rotate(-16deg); }
+  }
+
+  .walk .leg-a { animation: stepLeg 0.19s infinite alternate; }
+  .walk .leg-b { animation: stepLeg 0.19s infinite alternate-reverse; }
+  .walk svg { animation: marchBob 0.19s infinite alternate; }
+  @keyframes stepLeg { to { transform: translateY(-5px); } }
+  @keyframes marchBob { to { transform: translateY(-2.5px); } }
+
+  .shake svg { animation: shakeRig 0.065s 8 alternate; }
+  @keyframes shakeRig {
+    from { translate: -3.5px 0; }
+    to   { translate: 3.5px 0; }
+  }
+
+  .blink .eye-group { transform: scaleY(0.12); }
+  .look .eyes-wrap { transform: translateX(-3.5px); }
+  .eyes-wrap, .eye-group { transition: transform 0.12s ease !important; }
+
+  /* Facial expressions */
+  .brow-grumpy, .brow-angry, .mouth-closed, .mouth-open { opacity: 0; }
+  .mad1 .brow-grumpy { opacity: 1; }
+  .mad2 .brow-angry { opacity: 1; }
+
+  .mascot:not(.mad1):not(.mad2) .m-happy { opacity: 1; }
+  .mascot.mad1 .m-flat { opacity: 1; }
+  .mascot.mad2 .m-frown { opacity: 1; }
+
+  .mascot.talking .mouth-closed { opacity: 0 !important; }
+  .mascot.talking .mouth-open { opacity: 1 !important; }
+
+  /* Jetpack & angry steam particles */
+  .puff {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #E2E8F0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .puff.p1 { top: -2px; left: 38px; }
+  .puff.p2 { top: -2px; left: 74px; animation-delay: 0.45s !important; }
+  .mad2 .puff {
+    background: #FCA5A5;
+    animation: steamUp 0.9s ease-out infinite;
+  }
+  @keyframes steamUp {
+    0%   { opacity: 0.92; transform: translateY(0) scale(0.8); }
+    100% { opacity: 0; transform: translateY(-28px) scale(1.9); }
+  }
+
+  /* Zero-G stardust thruster sparkle */
+  .spark {
+    position: absolute;
+    bottom: 14px;
+    right: 12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .float-active .spark {
+    animation: sparkTrail 1.1s ease-out infinite;
+  }
+  @keyframes sparkTrail {
+    0%   { opacity: 0.85; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(10px, 12px) scale(0.2); }
+  }
+
+  /* High-contrast speech bubble with agent badge */
+  .bubble {
+    position: absolute;
+    bottom: 132px;
+    left: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #0F172A;
+    color: #F8FAFC;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    padding: 8px 13px;
+    border-radius: 14px;
+    opacity: 0;
+    transform: translateY(6px) scale(0.75);
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.42), 0 2px 5px rgba(2, 6, 23, 0.28);
+  }
+  .bubble.on {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .bubble.pop {
+    transform: translateY(-2px) scale(1.06);
+  }
+  .bubble.rage {
+    background: #7F1D1D;
+    color: #FEF2F2;
+    border-color: #F87171;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+  .badge.antigravity {
+    background: #1E3A8A;
+    color: #BAE6FD;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+  }
+  .badge.claude {
+    background: #7C2D12;
+    color: #FED7AA;
+    border: 1px solid rgba(251, 146, 60, 0.45);
+  }
+  .bubble.rage .badge {
+    background: #991B1B;
+    color: #FEE2E2;
+    border-color: #FCA5A5;
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="bubble" id="bub">
+    <span class="badge antigravity" id="badge">Antigravity</span>
+    <span id="bubText"></span>
+  </div>
+
+  <div class="mascot" id="mascot" data-source="antigravity" title="클릭하면 창으로 이동합니다">
+    <div class="puff p1"></div>
+    <div class="puff p2"></div>
+    <div class="spark"></div>
+    <div class="rig" id="rig">
+      <svg viewBox="0 0 130 124" width="124" height="118" aria-hidden="true">
+        <!-- Jetpack behind suit -->
+        <rect class="suit-shade" x="28" y="58" width="74" height="36" rx="10"/>
+
+        <!-- Space boots / legs -->
+        <g class="leg-a">
+          <rect class="suit-shade" x="42" y="94" width="14" height="22" rx="6"/>
+          <rect class="accent-fill" x="41" y="109" width="16" height="7" rx="3.5"/>
+        </g>
+        <g class="leg-b">
+          <rect class="suit-shade" x="74" y="94" width="14" height="22" rx="6"/>
+          <rect class="accent-fill" x="73" y="109" width="16" height="7" rx="3.5"/>
+        </g>
+
+        <!-- Compact torso -->
+        <rect class="suit-shade" x="37" y="72" width="56" height="28" rx="12"/>
+        <rect class="suit-fill" x="39" y="71" width="52" height="25" rx="11"/>
+        <!-- Chest control module -->
+        <rect x="53" y="78" width="24" height="11" rx="4" fill="#1E293B"/>
+        <circle class="accent-fill" cx="59" cy="83.5" r="2.6"/>
+        <rect x="65" y="82" width="8" height="3" rx="1.5" fill="#94A3B8"/>
+
+        <!-- Left & Right Space Gloves -->
+        <g class="arm-l">
+          <ellipse class="suit-shade" cx="24" cy="79" rx="11" ry="8.5"/>
+          <ellipse class="suit-fill" cx="23" cy="77.5" rx="9" ry="7"/>
+          <circle class="accent-fill" cx="17" cy="77.5" r="3"/>
+        </g>
+        <g class="arm-r">
+          <ellipse class="suit-shade" cx="106" cy="79" rx="11" ry="8.5"/>
+          <ellipse class="suit-fill" cx="107" cy="77.5" rx="9" ry="7"/>
+          <circle class="accent-fill" cx="113" cy="77.5" r="3"/>
+        </g>
+
+        <!-- Antenna -->
+        <line x1="65" y1="13" x2="65" y2="25" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+        <circle class="beacon-glow" cx="65" cy="11" r="9"/>
+        <circle class="accent-fill" cx="65" cy="11" r="5.5"/>
+        <circle cx="63.5" cy="9.5" r="1.8" fill="#FFFFFF"/>
+
+        <!-- Helmet ear pods -->
+        <rect class="suit-shade" x="18" y="44" width="9" height="20" rx="4.5"/>
+        <rect class="suit-shade" x="103" y="44" width="9" height="20" rx="4.5"/>
+
+        <!-- Astronaut Helmet Shell -->
+        <rect class="suit-shade" x="23" y="22" width="84" height="58" rx="28"/>
+        <rect class="suit-fill" x="25" y="21" width="80" height="55" rx="26"/>
+        <ellipse class="suit-hi" cx="50" cy="30" rx="18" ry="5.5" transform="rotate(-10 50 30)" opacity="0.85"/>
+
+        <!-- Dark Cosmic Visor -->
+        <rect class="visor-fill" x="33" y="31" width="64" height="38" rx="17"/>
+        <!-- Visor glass reflection -->
+        <path d="M41 36 Q52 33 61 36" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.28"/>
+
+        <!-- Blush LEDs -->
+        <ellipse cx="42" cy="57" rx="5.5" ry="2.8" fill="#F472B6" opacity="0.55"/>
+        <ellipse cx="88" cy="57" rx="5.5" ry="2.8" fill="#F472B6" opacity="0.55"/>
+
+        <!-- Glowing Visor Eyes -->
+        <g class="eyes-wrap" id="eyes">
+          <g class="eye-group">
+            <ellipse class="eye-fill" cx="51" cy="49" rx="5.8" ry="7.2"/>
+            <circle cx="53" cy="46.5" r="2.2" fill="#FFFFFF"/>
+          </g>
+          <g class="eye-group">
+            <ellipse class="eye-fill" cx="79" cy="49" rx="5.8" ry="7.2"/>
+            <circle cx="81" cy="46.5" r="2.2" fill="#FFFFFF"/>
+          </g>
+        </g>
+
+        <!-- Brows & Mouths inside Visor -->
+        <g fill="none" stroke-linecap="round">
+          <path class="brow-grumpy" stroke="#FBBF24" stroke-width="3" d="M43 39 L57 41 M87 39 L73 41"/>
+          <path class="brow-angry" stroke="#FF4D4D" stroke-width="3.4" d="M42 37 L58 43 M88 37 L72 43"/>
+
+          <path class="mouth-closed m-happy" stroke="var(--eye)" stroke-width="2.8" d="M59 59 Q65 64 71 59"/>
+          <path class="mouth-closed m-flat" stroke="#FBBF24" stroke-width="2.8" d="M59 61 L71 61"/>
+          <path class="mouth-closed m-frown" stroke="#FF4D4D" stroke-width="3" d="M58 63 Q65 57 72 63"/>
+        </g>
+        <ellipse class="mouth-open accent-fill" cx="65" cy="60.5" rx="4.8" ry="4.2"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const stageEl = $('stage');
+const mascot = $('mascot');
+const rig = $('rig');
+const bub = $('bub');
+const badge = $('badge');
+const bubText = $('bubText');
+const eyes = $('eyes');
+
+const PHRASES = {
+  ko: {
+    antigravity: {
+      question: [
+        '잠깐만요! Antigravity가 선택을 기다려요 🚀',
+        '똑똑! 확인해 주실 질문이 도착했어요!',
+        '무중력 교신 중! 답변 한 번만 부탁드려요 ✨',
+        '결정이 필요해요! 확인해 주시면 바로 이어갈게요!',
+      ],
+      permission: [
+        '잠깐! Antigravity가 실행 승인을 기다려요 🛡️',
+        '권한 확인 요청! 괜찮은지 봐주실래요?',
+      ],
+      complete: [
+        'Antigravity 작업 완료! 결과를 확인해 주세요 ✨',
+        '임무 완수! 다 끝났는데 한번 봐주실래요? 🚀',
+        '딩동~ Antigravity가 일을 마쳤어요!',
+        '기다리고 있었어요! 다음 지시를 내려주세요!',
+      ],
+      error: [
+        '앗! Antigravity 작업 중 확인이 필요해요 ⚠️',
+        '비상 교신! 멈춘 구간을 한번 살펴봐 주세요!',
+      ],
+    },
+    claude: {
+      question: [
+        '저기요! Claude가 답변을 기다리고 있어요!',
+        '똑똑! Claude에게 선택을 알려주세요!',
+        '잠깐 Claude 창 한번만 봐주실래요? ✨',
+      ],
+      permission: [
+        'Claude가 권한 승인을 기다리고 있어요!',
+        '똑똑! 이 명령 실행해도 될까요? (Claude)',
+        '잠깐만요! Claude 승인 버튼을 눌러주세요!',
+      ],
+      complete: [
+        'Claude가 작업을 마쳤어요! 확인해 보세요 ✨',
+        '딩동~ Claude 응답이 완료되었어요!',
+        'Claude가 다음 지시를 기다리고 있어요!',
+      ],
+      error: [
+        '앗! Claude에서 확인이 필요한 상태예요!',
+      ],
+    },
+    grumpy: [
+      '저기요오~? 아직 안 보셨나요…?',
+      '우주 미아 되겠어요… 한 번만 봐주세요…',
+      '제바알~ 확인 한 번이면 바로 끝나는데…',
+      '흥… 저 무시하시는 거 아니죠? 😤',
+      '기다리다 산소 탱크 다 쓰겠어요…',
+      '중얼중얼… 딴짓 중이신 게 분명해…',
+    ],
+    angry: [
+      '대답 좀 해주세요!!!',
+      '딴짓 그만!! 프로젝트 멈춰 있단 말이에요!!',
+      '진짜 화났어요!! 당장 확인해 주세요!!',
+      '얼마나 더 기다려야 해요?!',
+      '지금 화면 다 가려버릴 거예요?!',
+      '작업표시줄 위에서 시위 중입니다!! 쾅쾅!!',
+      '여기요!! 저 보라고요!! 그르르르!!',
+    ],
+  },
+  en: {
+    antigravity: {
+      question: [
+        'Psst! Antigravity is waiting for your choice 🚀',
+        'Knock knock! A question needs your input!',
+        'Zero-G signal incoming! Take a quick look ✨',
+      ],
+      permission: [
+        'Hold up! Antigravity needs your permission 🛡️',
+        'Quick approval needed in Antigravity!',
+      ],
+      complete: [
+        'Antigravity finished the task! Come check it out ✨',
+        'Mission accomplished! Ready for your review 🚀',
+        'Ding-dong! Antigravity wrapped up its work!',
+      ],
+      error: [
+        'Heads up! Antigravity hit an issue and paused ⚠️',
+      ],
+    },
+    claude: {
+      question: [
+        'Hey! Claude is waiting for your answer!',
+        'Knock knock! Claude has a question for you!',
+      ],
+      permission: [
+        'Claude needs your permission to proceed!',
+        'Hey! Check Claude’s permission prompt!',
+      ],
+      complete: [
+        'Claude finished replying! Take a look ✨',
+        'All done in Claude! Ready when you are!',
+      ],
+      error: [
+        'Heads up! Claude paused and needs attention!',
+      ],
+    },
+    grumpy: [
+      'Hello-o-o? Are you still there…?',
+      'Drifting in space here… please check in…',
+      'Pretty ple-e-ease, just one quick look…',
+      'Hmm… am I being ignored right now?',
+      'Mumble mumble… distracted again, huh…',
+    ],
+    angry: [
+      'ANSWER ALREADY!!!',
+      'STOP MULTITASKING! YOUR AGENT IS WAITING!!',
+      'I AM OFFICIALLY MAD NOW!!',
+      'How much longer is this gonna take?!',
+      'I will block the whole taskbar!! STOMP STOMP!!',
+    ],
+  },
+};
+
+const TIPS = {
+  ko: {
+    antigravity: '클릭하면 Antigravity 창으로 이동합니다',
+    claude: '클릭하면 Claude 창으로 이동합니다',
+  },
+  en: {
+    antigravity: 'Click to open Antigravity',
+    claude: 'Click to open Claude',
+  },
+};
+
+let cfg = {
+  lang: new URLSearchParams(location.search).get('lang') || 'ko',
+  sound: true,
+  volume: 0.85,
+  pauseSec: 7,
+};
+let curSource = 'antigravity';
+let curReason = 'complete';
+let audioCtx = null;
+let runId = 0;
+let lvl = 0;
+let lastPhrase = '';
+let x = 0;
+let busy = false;
+
+const stageWidth = () => stageEl.clientWidth;
+const langKey = () => (PHRASES[cfg.lang] ? cfg.lang : 'ko');
+
+function applySourceTheme(source, reason) {
+  curSource = source === 'claude' ? 'claude' : 'antigravity';
+  curReason = reason || 'complete';
+  mascot.dataset.source = curSource;
+  badge.textContent = curSource === 'claude' ? 'Claude' : 'Antigravity';
+  badge.className = `badge ${curSource}`;
+  const t = TIPS[langKey()] || TIPS.ko;
+  mascot.title = t[curSource];
+}
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+
+function volScale(v) {
+  return Math.max(0.001, v * (typeof cfg.volume === 'number' ? cfg.volume : 0.85));
+}
+
+function tone(freq, dur, type, freqEnd, delay = 0, gainVal = 0.08) {
+  if (!cfg.sound || cfg.volume <= 0) return;
+  const a = getAudio();
+  const osc = a.createOscillator();
+  const g = a.createGain();
+  const t0 = a.currentTime + delay;
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, t0 + dur);
+  g.gain.setValueAtTime(volScale(gainVal), t0);
+  g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+  osc.connect(g).connect(a.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.01);
+}
+
+function mumble(text) {
+  const syllables = Math.min(13, Math.max(3, Math.ceil(text.replace(/\s+/g, '').length * 0.42)));
+  const base = curSource === 'claude' ? [390, 300, 175][lvl] : [480, 340, 185][lvl];
+  const step = [0.11, 0.10, 0.085][lvl];
+  const dur = step * 0.78;
+
+  for (let i = 0; i < syllables; i++) {
+    setTimeout(() => {
+      mascot.classList.add('talking');
+      setTimeout(() => mascot.classList.remove('talking'), dur * 780);
+    }, i * step * 1000);
+  }
+
+  if (!cfg.sound || cfg.volume <= 0) return;
+  const a = getAudio();
+  const start = a.currentTime + 0.02;
+  const filter = a.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = [1950, 1450, 1100][lvl];
+  filter.Q.value = 3.5;
+  filter.connect(a.destination);
+
+  for (let i = 0; i < syllables; i++) {
+    const t = start + i * step;
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    const f0 = base * (0.86 + Math.random() * 0.32);
+    osc.type = lvl === 2 ? 'sawtooth' : (lvl === 1 ? 'square' : 'triangle');
+    osc.frequency.setValueAtTime(f0, t);
+    osc.frequency.linearRampToValueAtTime(f0 * (lvl === 2 ? 0.76 : 1.1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(volScale(lvl === 2 ? 0.11 : 0.085), t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    osc.connect(g).connect(filter);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+  if (lvl === 2) tone(82, syllables * step, 'sawtooth', 62, 0, 0.045);
+}
+
+const sfxPop = () => {
+  tone(380, 0.12, 'sine', 760, 0, 0.11);
+  tone(760, 0.10, 'triangle', 980, 0.08, 0.07);
+};
+const sfxBye = () => tone(780, 0.2, 'sine', 280, 0, 0.1);
+const sfxThump = () => tone(115, 0.09, 'sine', 52, 0, 0.24);
+
+const sleep = async ms => {
+  const id = runId;
+  await new Promise(r => setTimeout(r, ms));
+  if (id !== runId) throw 0;
+};
+
+const nextFrame = async () => {
+  const id = runId;
+  const t = await new Promise(requestAnimationFrame);
+  if (id !== runId) throw 0;
+  return t;
+};
+
+function flashClass(el, c, ms) {
+  el.classList.add(c);
+  setTimeout(() => el.classList.remove(c), ms);
+}
+
+function hop() {
+  rig.classList.add('hop');
+  setTimeout(() => rig.classList.remove('hop'), 240);
+}
+
+function positionBubble() {
+  const w = bub.offsetWidth;
+  const W = stageWidth();
+  bub.style.left = Math.max(10, Math.min(x + 62 - w / 2, W - w - 10)) + 'px';
+}
+
+function place(transitionMs) {
+  mascot.style.transition = transitionMs
+    ? `transform ${transitionMs}ms cubic-bezier(0.28, 1.35, 0.5, 1)`
+    : 'none';
+  mascot.style.transform = `translateX(${x}px)`;
+  positionBubble();
+}
+
+function pickPool() {
+  const dict = PHRASES[langKey()] || PHRASES.ko;
+  if (lvl === 1) return dict.grumpy;
+  if (lvl === 2) return dict.angry;
+  const agentPool = dict[curSource] || dict.antigravity;
+  return agentPool[curReason] || agentPool.complete;
+}
+
+function say() {
+  const pool = pickPool();
+  let line = pool[0];
+  if (pool.length > 1) {
+    do {
+      line = pool[Math.floor(Math.random() * pool.length)];
+    } while (line === lastPhrase);
+  }
+  lastPhrase = line;
+  bubText.textContent = line;
+  bub.classList.toggle('rage', lvl === 2);
+  bub.classList.add('on', 'pop');
+  positionBubble();
+  setTimeout(() => bub.classList.remove('pop'), 190);
+  mumble(line);
+}
+
+function setMood(newLvl) {
+  lvl = newLvl;
+  mascot.classList.toggle('mad1', newLvl === 1);
+  mascot.classList.toggle('mad2', newLvl === 2);
+}
+
+const PEEK_GESTURES = [
+  [() => flashClass(mascot, 'wave', 1200), () => flashClass(mascot, 'look', 850), hop],
+  [() => flashClass(mascot, 'shake', 560), () => flashClass(mascot, 'wave', 1100), hop],
+];
+
+async function peekOnce(moodLvl) {
+  setMood(moodLvl);
+  rig.classList.add('float');
+  mascot.classList.add('float-active');
+  x = stageWidth() - 92;
+  place(520);
+  sfxPop();
+  await sleep(560);
+
+  for (let i = 0; i < 3; i++) {
+    PEEK_GESTURES[moodLvl][i]();
+    say();
+    await sleep(2050);
+  }
+
+  bub.classList.remove('on');
+  x = stageWidth() + 12;
+  place(440);
+  sfxBye();
+  await sleep(480);
+  rig.classList.remove('float');
+  mascot.classList.remove('float-active');
+}
+
+async function walkTo(targetX, speedPxPerSec) {
+  let prev = await nextFrame();
+  const dir = Math.sign(targetX - x);
+  if (dir === 0) return;
+  eyes.style.transform = `translateX(${dir * 3.5}px)`;
+  while ((targetX - x) * dir > 0) {
+    const now = await nextFrame();
+    x += dir * speedPxPerSec * ((now - prev) / 1000);
+    prev = now;
+    if ((targetX - x) * dir < 0) x = targetX;
+    place(0);
+  }
+}
+
+async function rageWalk() {
+  setMood(2);
+  rig.classList.remove('float');
+  mascot.classList.remove('float-active');
+  mascot.classList.add('walk', 'fist');
+  x = stageWidth() + 12;
+  place(0);
+  await walkTo(stageWidth() - 155, 125);
+
+  const endAt = performance.now() + 20000;
+  let dir = -1;
+  let nextShout = 0;
+  let pause = 0;
+  let prev = performance.now();
+
+  while (true) {
+    const now = await nextFrame();
+    const dt = (now - prev) / 1000;
+    prev = now;
+    if (now > endAt) break;
+
+    if (pause > 0) {
+      pause -= dt;
+    } else {
+      x += dir * 78 * dt;
+      if (x < 14) { x = 14; dir = 1; }
+      if (x > stageWidth() - 138) { x = stageWidth() - 138; dir = -1; }
+      eyes.style.transform = `translateX(${dir * 3.5}px)`;
+    }
+
+    if (now > nextShout) {
+      pause = 0.62;
+      flashClass(mascot, 'shake', 560);
+      sfxThump();
+      say();
+      hop();
+      nextShout = now + 2350;
+    }
+    place(0);
+  }
+
+  bub.classList.remove('on');
+  await walkTo(stageWidth() + 12, 175);
+  mascot.classList.remove('walk', 'fist');
+  eyes.style.transform = '';
+  sfxBye();
+}
+
+async function runLoop(startStage = 0) {
+  busy = true;
+  api.ping(true);
+  const pauseMs = () => Math.max(2, Number(cfg.pauseSec) || 7) * 1000;
+  try {
+    if (startStage === 2) {
+      await rageWalk();
+      await sleep(pauseMs());
+    } else if (startStage === 1) {
+      await peekOnce(1);
+      await sleep(pauseMs());
+      await rageWalk();
+      await sleep(pauseMs());
+    }
+    while (true) {
+      await peekOnce(0);
+      await sleep(pauseMs());
+      await peekOnce(0);
+      await sleep(pauseMs());
+      await peekOnce(1);
+      await sleep(pauseMs());
+      await rageWalk();
+      await sleep(pauseMs());
+    }
+  } catch {}
+}
+
+function resetVisuals() {
+  runId++;
+  bub.classList.remove('on', 'pop', 'rage');
+  mascot.classList.remove('walk', 'fist', 'mad1', 'mad2', 'talking', 'float-active', 'wave', 'shake', 'look');
+  rig.classList.remove('float', 'hop');
+  eyes.style.transform = '';
+  lvl = 0;
+  api.ping(false);
+}
+
+async function leaveSmoothly() {
+  const wasBusy = busy;
+  busy = false;
+  const visible = x < stageWidth();
+  resetVisuals();
+  const id = runId;
+  const finish = () => { if (id === runId) api.idle(); };
+  if (!wasBusy && !visible) {
+    finish();
+    return;
+  }
+  if (visible) {
+    mascot.classList.add('walk');
+    try {
+      await walkTo(stageWidth() + 14, 340);
+    } catch {}
+    mascot.classList.remove('walk');
+    eyes.style.transform = '';
+    sfxBye();
+  }
+  finish();
+}
+
+function startAlert(payload = {}) {
+  resetVisuals();
+  applySourceTheme(payload.source || 'antigravity', payload.reason || 'complete');
+  x = stageWidth() + 12;
+  place(0);
+  runLoop(Number(payload.stage) || 0);
+}
+
+mascot.addEventListener('click', () => {
+  api.clicked();
+  leaveSmoothly();
+});
+
+mascot.addEventListener('mouseenter', () => api.mouse(true));
+mascot.addEventListener('mouseleave', () => api.mouse(false));
+
+window.addEventListener('resize', () => {
+  if (!busy && x >= stageWidth() - 5) {
+    x = stageWidth() + 12;
+    place(0);
+  }
+});
+
+x = stageWidth() + 12;
+place(0);
+setInterval(() => flashClass(mascot, 'blink', 140), 3200);
+
+api.on('notify', startAlert);
+api.on('leave', leaveSmoothly);
+api.on('config', next => {
+  cfg = { ...cfg, ...next };
+  applySourceTheme(curSource, curReason);
+});
+api.on('status', () => {
+  api.reportStatus({
+    busy,
+    visible: x < stageWidth(),
+    source: curSource,
+    reason: curReason,
+    lvl,
+    x: Math.round(x),
+    width: stageWidth(),
+    bubble: bub.classList.contains('on') ? bubText.textContent : '',
+  });
+});
+</script>
+</body>
+</html>

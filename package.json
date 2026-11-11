@@ -1,0 +1,86 @@
+{
+  "name": "antigravity-mascot",
+  "productName": "Antigravity Mascot",
+  "version": "1.0.0",
+  "description": "Animated zero-gravity astronaut mascot on your Windows taskbar that alerts you when Antigravity or Claude finishes work or awaits your confirmation.",
+  "author": "maker-KK",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "icons": "electron tools/make-icons.js",
+    "test": "node test/smoke-test.js",
+    "dist:portable": "electron-builder --win portable --x64",
+    "dist": "electron-builder --win nsis portable --x64"
+  },
+  "dependencies": {
+    "koffi": "3.3.7"
+  },
+  "devDependencies": {
+    "electron": "45.3.0",
+    "electron-builder": "26.18.0"
+  },
+  "allowScripts": {
+    "electron@45.3.0": true,
+    "koffi@3.3.7": true
+  },
+  "build": {
+    "appId": "com.makerkk.antigravity.mascot",
+    "productName": "Antigravity Mascot",
+    "copyright": "Copyright © 2026 maker-KK",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**",
+      "assets/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/koffi/**",
+      "node_modules/@koromix/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "executableName": "AntigravityMascot",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "portable": {
+      "artifactName": "AntigravityMascot-${version}-portable.exe"
+    },
+    "electronLanguages": [
+      "ko",
+      "en-US"
+    ],
+    "compression": "maximum",
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Antigravity Mascot",
+      "uninstallDisplayName": "Antigravity Mascot",
+      "artifactName": "AntigravityMascot-Setup-${version}.exe"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maker-KK/antigravity-mascot.git"
+  }
+}

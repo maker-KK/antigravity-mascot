@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Antigravity Mascot — 설정 및 컨트롤 데크</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:">
+<style>
+  :root {
+    --bg: #0B101E;
+    --surface: #131B2E;
+    --surface-hover: #19233B;
+    --border: rgba(148, 163, 184, 0.16);
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --agy: #38BDF8;
+    --agy-bg: rgba(56, 189, 248, 0.14);
+    --claude: #FB923C;
+    --claude-bg: rgba(251, 146, 60, 0.14);
+    --ok: #34D399;
+    --danger: #F87171;
+  }
+
+  * { box-sizing: border-box; }
+  ::selection { background: rgba(56, 189, 248, 0.3); color: #FFF; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #26334D; border-radius: 4px; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: keep-all;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 22px 24px 28px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #172554;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .sub {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .port-pill {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 12px;
+    color: #BAE6FD;
+    background: var(--agy-bg);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  h2 {
+    margin: 22px 0 10px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #E2E8F0;
+    letter-spacing: -0.01em;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+  .row + .row {
+    border-top: 1px solid var(--border);
+  }
+
+  .row-title {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .row-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #64748B;
+  }
+  .status-dot.on {
+    background: var(--ok);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  }
+
+  /* Accessible switch */
+  .switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: #334155;
+    border-radius: 999px;
+    transition: background 0.18s ease;
+  }
+  .slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #F8FAFC;
+    border-radius: 50%;
+    transition: transform 0.18s ease;
+  }
+  .switch input:checked + .slider {
+    background: #0284C7;
+  }
+  .switch input:checked + .slider::before {
+    transform: translateX(18px);
+  }
+  .switch input:focus-visible + .slider {
+    outline: 2px solid var(--agy);
+    outline-offset: 2px;
+  }
+
+  select, input[type="range"] {
+    accent-color: var(--agy);
+  }
+  select {
+    background: #0B1221;
+    color: var(--text);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  select:focus-visible {
+    outline: 2px solid var(--agy);
+    outline-offset: 1px;
+  }
+
+  .range-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .range-val {
+    min-width: 38px;
+    text-align: right;
+    font-size: 12.5px;
+    color: #CBD5E1;
+  }
+
+  .btn-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 9px;
+    padding: 8px 13px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: #1E293B;
+    color: var(--text);
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  button:hover { background: #283548; }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 2px solid var(--agy); outline-offset: 2px; }
+
+  button.btn-agy {
+    background: #172554;
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #E0F2FE;
+  }
+  button.btn-agy:hover { background: #1E3A8A; }
+
+  button.btn-claude {
+    background: #431407;
+    border-color: rgba(251, 146, 60, 0.4);
+    color: #FFEDD5;
+  }
+  button.btn-claude:hover { background: #7C2D12; }
+
+  button.btn-rage {
+    background: #450A0A;
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #FEE2E2;
+  }
+  button.btn-rage:hover { background: #7F1D1D; }
+
+  .log-list {
+    padding: 10px 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    max-height: 132px;
+    overflow-y: auto;
+  }
+  .log-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .log-item + .log-item {
+    border-top: 1px dashed rgba(148, 163, 184, 0.12);
+  }
+  .tag-agy { color: var(--agy); font-weight: 600; }
+  .tag-claude { color: var(--claude); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="28" height="28">
+          <line x1="20" y1="4" x2="20" y2="10" stroke="#BAE6FD" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="20" cy="3.5" r="2.5" fill="#38BDF8"/>
+          <rect x="7" y="10" width="26" height="24" rx="11" fill="#F8FAFC"/>
+          <rect x="10.5" y="14.5" width="19" height="13" rx="6" fill="#0F172A"/>
+          <circle cx="16" cy="21" r="2.3" fill="#38BDF8"/>
+          <circle cx="24" cy="21" r="2.3" fill="#38BDF8"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Antigravity Mascot</h1>
+        <p class="sub">작업 완료·질문·권한 대기 시 작업표시줄 우측에서 튀어나오는 통합 알림 마스코트</p>
+      </div>
+    </div>
+    <span class="port-pill" id="portBadge">127.0.0.1:47822</span>
+  </header>
+
+  <h2>바로 테스트해 보기</h2>
+  <div class="panel">
+    <div class="btn-bar">
+      <button class="btn-agy" id="btnTestAgyQ">Antigravity 질문 알림</button>
+      <button class="btn-agy" id="btnTestAgyDone">Antigravity 작업 완료</button>
+      <button class="btn-claude" id="btnTestClaude">Claude 권한 승인</button>
+      <button class="btn-rage" id="btnTestRage">화남 폭주(3단계) 보기</button>
+      <button id="btnDismiss">마스코트 숨기기</button>
+    </div>
+  </div>
+
+  <h2>에이전트 훅 연동</h2>
+  <div class="panel">
+    <div class="row">
+      <div>
+        <div class="row-title">
+          <span class="status-dot" id="dotAgy"></span>
+          Antigravity 플러그인 훅 연동
+        </div>
+        <div class="row-desc">질문(ask_question) 및 작업 완료(Stop) 시 즉시 마스코트를 호출합니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkAgyHook">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">Antigravity 작업 완료 시 알림 (Stop 이벤트)</div>
+        <div class="row-desc">백그라운드 대기가 완전히 끝난 턴 종료 시점에 알려줍니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkAgyStop">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">
+          <span class="status-dot" id="dotClaude"></span>
+          Claude Code 훅 연동 (~/.claude/settings.json)
+        </div>
+        <div class="row-desc">기존 설정을 보존하면서 권한 요청·질문·완료 신호를 함께 받습니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkClaudeHook">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">Claude 응답 완료 시에도 알림 (Stop 이벤트)</div>
+        <div class="row-desc">질문뿐 아니라 Claude가 일을 마쳤을 때도 놓치지 않게 알려줍니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkClaudeStop">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">Windows 데스크탑 알림 보조 감지</div>
+        <div class="row-desc">데스크탑 앱의 Windows 토스트 알림도 함께 감지합니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkToasts">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <h2>마스코트 모양 · 소리 · 실행</h2>
+  <div class="panel">
+    <div class="row">
+      <div>
+        <div class="row-title">마스코트 크기</div>
+        <div class="row-desc">작업표시줄 위 캐릭터 및 말풍선 배율</div>
+      </div>
+      <select id="selScale">
+        <option value="1">작게 (100%)</option>
+        <option value="1.4">보통 (140%)</option>
+        <option value="1.8">크게 (180%)</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">빼꼼 재호출 간격</div>
+        <div class="row-desc">숨었다가 다시 나타나기까지의 대기 시간</div>
+      </div>
+      <select id="selPause">
+        <option value="5">빠르게 (5초)</option>
+        <option value="7">기본 (7초)</option>
+        <option value="12">여유롭게 (12초)</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">효과음 및 우주인 목소리</div>
+        <div class="row-desc">말풍선이 뜰 때 귀여운 신스 효과음을 재생합니다.</div>
+      </div>
+      <div class="range-wrap">
+        <input type="range" id="rngVolume" min="0" max="100" step="5">
+        <span class="range-val" id="lblVolume">85%</span>
+        <label class="switch">
+          <input type="checkbox" id="chkSound">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">말풍선 언어</div>
+        <div class="row-desc">한국어 또는 영어 대사로 전환</div>
+      </div>
+      <select id="selLang">
+        <option value="auto">시스템 자동</option>
+        <option value="ko">한국어</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-title">Windows 시작 시 자동 실행</div>
+        <div class="row-desc">PC 부팅 시 트레이에서 자동으로 대기합니다.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="chkAutostart">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <h2>최근 감지된 알림 로그</h2>
+  <div class="panel">
+    <div class="log-list" id="logList">아직 수신된 이벤트가 없습니다. 위의 테스트 버튼을 눌러보세요!</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function render(state) {
+  if (!state) return;
+  const { cfg, hooks, port, recentEvents } = state;
+  $('portBadge').textContent = `127.0.0.1:${port}`;
+
+  $('chkAgyHook').checked = !!cfg.agyHook;
+  $('chkAgyStop').checked = !!cfg.agyStopHook;
+  $('chkAgyStop').disabled = !cfg.agyHook;
+  $('dotAgy').classList.toggle('on', !!(hooks && hooks.antigravity && hooks.antigravity.enabled));
+
+  $('chkClaudeHook').checked = !!cfg.claudeHook;
+  $('chkClaudeStop').checked = !!cfg.claudeStopHook;
+  $('chkClaudeStop').disabled = !cfg.claudeHook;
+  $('dotClaude').classList.toggle('on', !!(hooks && hooks.claude && hooks.claude.installed));
+
+  $('chkToasts').checked = !!cfg.toasts;
+  $('selScale').value = String(cfg.scale || 1.4);
+  $('selPause').value = String(cfg.pauseSec || 7);
+  $('chkSound').checked = !!cfg.sound;
+  const volPct = Math.round((typeof cfg.volume === 'number' ? cfg.volume : 0.85) * 100);
+  $('rngVolume').value = String(volPct);
+  $('lblVolume').textContent = `${volPct}%`;
+  $('selLang').value = cfg.lang || 'auto';
+  $('chkAutostart').checked = !!cfg.autostart;
+
+  if (Array.isArray(recentEvents) && recentEvents.length > 0) {
+    $('logList').innerHTML = recentEvents.map(ev => {
+      const cls = ev.source === 'claude' ? 'tag-claude' : 'tag-agy';
+      const label = ev.source === 'claude' ? 'Claude' : 'Antigravity';
+      return `<div class="log-item"><span><span class="${cls}">[${label}]</span> ${ev.detail}</span><span>${ev.time}</span></div>`;
+    }).join('');
+  }
+}
+
+async function patch(p) {
+  const next = await api.updateConfig(p);
+  render(next);
+}
+
+$('chkAgyHook').onchange = e => patch({ agyHook: e.target.checked });
+$('chkAgyStop').onchange = e => patch({ agyStopHook: e.target.checked });
+$('chkClaudeHook').onchange = e => patch({ claudeHook: e.target.checked });
+$('chkClaudeStop').onchange = e => patch({ claudeStopHook: e.target.checked });
+$('chkToasts').onchange = e => patch({ toasts: e.target.checked });
+$('selScale').onchange = e => patch({ scale: Number(e.target.value) });
+$('selPause').onchange = e => patch({ pauseSec: Number(e.target.value) });
+$('chkSound').onchange = e => patch({ sound: e.target.checked });
+$('rngVolume').oninput = e => { $('lblVolume').textContent = `${e.target.value}%`; };
+$('rngVolume').onchange = e => patch({ volume: Number(e.target.value) / 100 });
+$('selLang').onchange = e => patch({ lang: e.target.value });
+$('chkAutostart').onchange = e => patch({ autostart: e.target.checked });
+
+$('btnTestAgyQ').onclick = () => api.triggerTest({ source: 'antigravity', reason: 'question', stage: 0 });
+$('btnTestAgyDone').onclick = () => api.triggerTest({ source: 'antigravity', reason: 'complete', stage: 0 });
+$('btnTestClaude').onclick = () => api.triggerTest({ source: 'claude', reason: 'permission', stage: 0 });
+$('btnTestRage').onclick = () => api.triggerTest({ source: 'antigravity', reason: 'question', stage: 2 });
+$('btnDismiss').onclick = () => api.dismiss();
+
+api.getState().then(render);
+api.on('stateChanged', render);
+</script>
+</body>
+</html>

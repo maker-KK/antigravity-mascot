@@ -22,6 +22,24 @@ const EnumWindows = user32.func('int __stdcall EnumWindows(EnumWindowsProc *cb, 
 const OpenProcess = kernel32.func('intptr_t __stdcall OpenProcess(uint32_t access, int inherit, uint32_t pid)');
 const QueryFullProcessImageNameW = kernel32.func('int __stdcall QueryFullProcessImageNameW(intptr_t h, uint32_t flags, void *buf, _Inout_ uint32_t *size)');
 const CloseHandle = kernel32.func('int __stdcall CloseHandle(intptr_t h)');
+const GetCurrentThreadId = kernel32.func('uint32_t __stdcall GetCurrentThreadId()');
+const GetThreadDesktop = user32.func('intptr_t __stdcall GetThreadDesktop(uint32_t dwThreadId)');
+const GetUserObjectInformationW = user32.func('int __stdcall GetUserObjectInformationW(intptr_t hObj, int nIndex, void *pvInfo, uint32_t nLength, _Out_ uint32_t *lpnLengthNeeded)');
+
+const UOI_NAME = 2;
+
+function currentDesktopName() {
+  try {
+    const hDesk = GetThreadDesktop(GetCurrentThreadId());
+    if (!hDesk) return '';
+    const buf = Buffer.alloc(512);
+    const needed = [0];
+    if (GetUserObjectInformationW(hDesk, UOI_NAME, buf, buf.length, needed)) {
+      return buf.toString('utf16le').replace(/\0.*$/, '');
+    }
+  } catch {}
+  return '';
+}
 
 const SW_RESTORE = 9;
 const SW_SHOW = 5;
@@ -120,6 +138,7 @@ function activate(hwnd) {
 }
 
 module.exports = {
+  currentDesktopName,
   foreground,
   enumerateWindows,
   windowsOf,

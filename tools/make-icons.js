@@ -51,62 +51,102 @@ function drawAstronaut(size, variant) {
     grad.addColorStop(0, '#312E81');
     grad.addColorStop(0.55, '#1D4ED8');
     grad.addColorStop(1, '#0284C7');
-    rrect(8, 8, 112, 112, 28);
+    rrect(6, 6, 116, 116, 30);
     ctx.fillStyle = grad;
     ctx.fill();
   }
 
+  // High-contrast dark outline for tray icons so it pops on BOTH light & dark Windows taskbars!
+  const isTray = variant !== 'app';
+
   // Antenna stem
-  ctx.strokeStyle = variant === 'ping' ? '#FDBA74' : '#BAE6FD';
-  ctx.lineWidth = Math.max(1.5, s(6));
+  ctx.strokeStyle = isTray ? '#1E1B4B' : '#BAE6FD';
+  ctx.lineWidth = Math.max(2, s(isTray ? 12 : 6));
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(s(64), s(14));
-  ctx.lineTo(s(64), s(30));
+  ctx.moveTo(s(64), s(12));
+  ctx.lineTo(s(64), s(28));
   ctx.stroke();
+
+  if (isTray) {
+    ctx.strokeStyle = variant === 'ping' ? '#FB923C' : '#38BDF8';
+    ctx.lineWidth = Math.max(1.2, s(6));
+    ctx.beginPath();
+    ctx.moveTo(s(64), s(12));
+    ctx.lineTo(s(64), s(28));
+    ctx.stroke();
+  }
 
   // Antenna beacon
   ctx.beginPath();
-  ctx.arc(s(64), s(13), s(9), 0, Math.PI * 2);
-  ctx.fillStyle = variant === 'ping' ? '#F97316' : '#38BDF8';
+  ctx.arc(s(64), s(12), s(isTray ? 11 : 9), 0, Math.PI * 2);
+  ctx.fillStyle = variant === 'ping' ? '#F97316' : '#0EA5E9';
   ctx.fill();
+  if (isTray) {
+    ctx.lineWidth = Math.max(1, s(5));
+    ctx.strokeStyle = '#1E1B4B';
+    ctx.stroke();
+  }
 
-  // Helmet outer shell
-  rrect(20, 28, 88, 78, 34);
-  ctx.fillStyle = '#CBD5E1';
-  ctx.fill();
+  // Helmet outer shell (bigger on tray for crisp 16x16 / 24x24 legibility!)
+  if (isTray) {
+    rrect(10, 24, 108, 92, 40);
+    ctx.fillStyle = '#1E293B';
+    ctx.fill();
 
-  rrect(22, 26, 84, 73, 32);
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fill();
+    rrect(17, 30, 94, 80, 35);
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fill();
 
-  // Dark visor
-  rrect(32, 40, 64, 46, 20);
-  ctx.fillStyle = '#0F172A';
-  ctx.fill();
+    rrect(26, 42, 76, 54, 24);
+    ctx.fillStyle = '#0F172A';
+    ctx.fill();
 
-  // Glowing eyes
-  const eyeColor = variant === 'ping' ? '#FB923C' : '#38BDF8';
-  ctx.fillStyle = eyeColor;
-  ctx.beginPath();
-  ctx.arc(s(50), s(62), s(7.5), 0, Math.PI * 2);
-  ctx.arc(s(78), s(62), s(7.5), 0, Math.PI * 2);
-  ctx.fill();
+    const eyeColor = variant === 'ping' ? '#FB923C' : '#38BDF8';
+    ctx.fillStyle = eyeColor;
+    ctx.beginPath();
+    ctx.arc(s(47), s(69), s(9.5), 0, Math.PI * 2);
+    ctx.arc(s(81), s(69), s(9.5), 0, Math.PI * 2);
+    ctx.fill();
 
-  // Eye highlights
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(s(52.5), s(59.5), s(2.6), 0, Math.PI * 2);
-  ctx.arc(s(80.5), s(59.5), s(2.6), 0, Math.PI * 2);
-  ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(s(50), s(65.5), s(3.2), 0, Math.PI * 2);
+    ctx.arc(s(84), s(65.5), s(3.2), 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    rrect(20, 28, 88, 78, 34);
+    ctx.fillStyle = '#CBD5E1';
+    ctx.fill();
+
+    rrect(22, 26, 84, 73, 32);
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fill();
+
+    rrect(32, 40, 64, 46, 20);
+    ctx.fillStyle = '#0F172A';
+    ctx.fill();
+
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(s(50), s(62), s(7.5), 0, Math.PI * 2);
+    ctx.arc(s(78), s(62), s(7.5), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(s(52.5), s(59.5), s(2.6), 0, Math.PI * 2);
+    ctx.arc(s(80.5), s(59.5), s(2.6), 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Notification ping badge on tray-ping
   if (variant === 'ping') {
     ctx.beginPath();
-    ctx.arc(s(100), s(28), s(20), 0, Math.PI * 2);
+    ctx.arc(s(102), s(26), s(22), 0, Math.PI * 2);
     ctx.fillStyle = '#EF4444';
     ctx.fill();
-    ctx.lineWidth = Math.max(1, s(4));
+    ctx.lineWidth = Math.max(1.2, s(6));
     ctx.strokeStyle = '#FFFFFF';
     ctx.stroke();
   }
@@ -157,9 +197,9 @@ app.whenReady().then(async () => {
     return items;
   }
 
-  const appFrames = await renderVariant('app', [16, 32, 48, 64, 128, 256]);
-  const trayNormalFrames = await renderVariant('normal', [16, 24, 32, 48]);
-  const trayPingFrames = await renderVariant('ping', [16, 24, 32, 48]);
+  const appFrames = await renderVariant('app', [16, 24, 32, 48, 64, 128, 256]);
+  const trayNormalFrames = await renderVariant('normal', [16, 20, 24, 32, 40, 48, 64]);
+  const trayPingFrames = await renderVariant('ping', [16, 20, 24, 32, 40, 48, 64]);
 
   fs.writeFileSync(path.join(ASSETS, 'icon.ico'), packIco(appFrames));
   fs.writeFileSync(path.join(ASSETS, 'icon.png'), appFrames.find(f => f.size === 256).buf);

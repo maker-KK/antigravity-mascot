@@ -24,6 +24,18 @@ const SCALES = [1, 1.4, 1.8];
 const ASSETS = path.join(__dirname, '..', 'assets');
 
 app.setAppUserModelId('com.makerkk.antigravity.mascot');
+
+// Prevent accidental launches inside non-interactive sandbox desktops (e.g. exebox-*)
+// from grabbing the single-instance lock or port away from the real Windows desktop!
+if (!process.env.MASCOT_HEADLESS_TEST && w32 && typeof w32.currentDesktopName === 'function') {
+  const desk = w32.currentDesktopName();
+  if (desk && /^exebox-/i.test(desk)) {
+    console.error(`[mascot] Refusing to start inside sandbox desktop "${desk}". Launch from Windows Explorer instead.`);
+    app.quit();
+    process.exit(0);
+  }
+}
+
 if (!process.env.MASCOT_ALLOW_MULTI && !app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
@@ -677,6 +689,13 @@ ipcMain.handle('settings:dismiss', () => {
 
 // ---------- App Lifecycle ----------
 app.on('second-instance', () => {
+  if (tray) {
+    tray.displayBalloon({
+      title: t().name,
+      content: t().already,
+      iconType: 'info',
+    });
+  }
   openSettingsWindow();
 });
 
